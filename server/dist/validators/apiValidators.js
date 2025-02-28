@@ -16,7 +16,7 @@ exports.articleValidators = articleValidators;
 const collectionValidators = () => {
     return [
         (0, express_validator_1.body)("owner").escape(),
-        (0, express_validator_1.body)("name").escape()
+        (0, express_validator_1.body)("title").escape()
     ];
 };
 exports.collectionValidators = collectionValidators;

@@ -35,9 +35,10 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Collection = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const collectionSchema = new mongoose_1.Schema({
+const Boardchema = new mongoose_1.Schema({
     owner: { type: String, required: true },
-    name: { type: String, required: true }
+    title: { type: String, required: true },
+    children: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Article", required: true, default: [] }]
 });
-const Collection = mongoose_1.default.model("Collection", collectionSchema);
+const Collection = mongoose_1.default.model("Collection", Boardchema);
 exports.Collection = Collection;

@@ -39,7 +39,7 @@ const articleSchema = new mongoose_1.Schema({
     owner: { type: String, required: true },
     parent: { type: String, required: true },
     color: { type: String, required: true },
-    header: { type: String, required: true },
+    title: { type: String, required: true },
     content: { type: String, required: true },
     tags: { type: [String], required: true },
 });

@@ -1,10 +1,10 @@
-import mongoose, {Document, Schema} from "mongoose"
+import mongoose, {Document, Schema, Types} from "mongoose"
 
 interface IArticle extends Document {
+    parent: Types.ObjectId
     owner: string
-    parent: string
     color: string
-    header: string
+    title: string
     content: string
     tags: string[]
 }
@@ -13,7 +13,7 @@ const articleSchema = new Schema ({
     owner: {type: String, required: true},
     parent: {type: String, required: true},
     color: {type: String, required: true},
-    header: {type: String, required: true},
+    title: {type: String, required: true},
     content: {type: String, required: true},
     tags: {type: [String], required: true},
 })

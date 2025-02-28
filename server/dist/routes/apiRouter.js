@@ -15,24 +15,24 @@ apiRouter.post("/collection", validateToken_1.validateUser, (0, apiValidators_1.
     }
     try {
         const user = req.user;
-        const existingCollections = await Collection_1.Collection.find({ name: req.body.name });
-        existingCollections.map((collection) => {
-            if (collection.owner === user.id) {
-                return void res.status(500).json({ message: `Collection with name ${req.body.name} already exists.` });
+        const existingBoard = await Collection_1.Collection.find({ title: req.body.title });
+        existingBoard.map((collection) => {
+            if (collection.owner === user._id) {
+                return void res.status(500).json({ message: `Collection with title ${req.body.title} already exists.` });
             }
         });
         Collection_1.Collection.create({
-            owner: user.id,
-            name: req.body.name,
+            owner: user._id,
+            title: req.body.title,
         });
-        return void res.status(200).json({ message: `Collection ${req.body.name} created.` });
+        return void res.status(200).json({ message: `Collection ${req.body.title} created.` });
     }
     catch (error) {
         console.error(`Error while creating collection: ${error}`);
         return void res.status(400).json({ message: "Error while creating collection" });
     }
 });
-apiRouter.get("/collections", validateToken_1.validateUser, async (req, res) => {
+apiRouter.get("/Board", validateToken_1.validateUser, async (req, res) => {
     const validationErrors = (0, express_validator_1.validationResult)(req);
     if (!validationErrors.isEmpty()) {
         console.error(`ValidationErrors ${validationErrors}`);
@@ -40,18 +40,18 @@ apiRouter.get("/collections", validateToken_1.validateUser, async (req, res) => 
     }
     try {
         const user = req.user;
-        const collections = await Collection_1.Collection.find({ owner: user.id });
-        if (!collections) {
-            return void res.status(404).json({ message: `No collections found` });
+        const Board = await Collection_1.Collection.find({ owner: user._id });
+        if (!Board) {
+            return void res.status(404).json({ message: `No Board found` });
         }
-        return void res.status(200).json(collections);
+        return void res.status(200).json(Board);
     }
     catch (error) {
-        console.error(`Error while fetching collections: ${error}`);
-        return void res.status(500).json({ message: `Error while fetching collections.` });
+        console.error(`Error while fetching Board: ${error}`);
+        return void res.status(500).json({ message: `Error while fetching Board.` });
     }
 });
-apiRouter.post("/article", validateToken_1.validateUser, (0, apiValidators_1.articleValidators)(), async (req, res) => {
+apiRouter.post("/article/create", validateToken_1.validateUser, (0, apiValidators_1.articleValidators)(), async (req, res) => {
     const validationErrors = (0, express_validator_1.validationResult)(req);
     if (!validationErrors.isEmpty()) {
         console.error(`ValidationErrors ${validationErrors}`);
@@ -60,21 +60,41 @@ apiRouter.post("/article", validateToken_1.validateUser, (0, apiValidators_1.art
     try {
         const user = req.user;
         await Article_1.Article.create({
-            owner: user.id,
+            owner: user._id,
             parent: req.body.parent,
             color: req.body.color,
-            header: req.body.header,
+            title: req.body.title,
             content: req.body.content,
             tags: req.body.tags
         });
-        return void res.status(200).json({ message: `Article '${req.body.header}' created.` });
+        return void res.status(200).json({ message: `Article '${req.body.title}' created.` });
     }
     catch (error) {
         console.error(`Error while creating article ${error}`);
         return void res.status(500).json({ message: "server error while creating article" });
     }
 });
-apiRouter.get("/articles", validateToken_1.validateUser, async (req, res) => {
+apiRouter.post("/article/save", validateToken_1.validateUser, async (req, res) => {
+    const validationErrors = (0, express_validator_1.validationResult)(req);
+    if (!validationErrors.isEmpty()) {
+        console.error(`ValidationErrors ${validationErrors}`);
+        return void res.status(403).json({ message: `Bad request` });
+    }
+    try {
+        console.log(req.body);
+        const oldArticle = await Article_1.Article.findOne({ _id: req.body._id });
+        await Article_1.Article.updateOne({ _id: req.body._id }, {
+            title: req.body.title,
+            content: req.body.content,
+        });
+        return void res.status(200).json({ message: "article saved" });
+    }
+    catch (error) {
+        console.error(error);
+        return void res.status(500).json({ message: "server error while saving article" });
+    }
+});
+apiRouter.get("/get/board", validateToken_1.validateUser, async (req, res) => {
     const validationErrors = (0, express_validator_1.validationResult)(req);
     if (!validationErrors.isEmpty()) {
         console.error(`ValidationErrors ${validationErrors}`);
@@ -82,11 +102,19 @@ apiRouter.get("/articles", validateToken_1.validateUser, async (req, res) => {
     }
     try {
         const user = req.user;
-        const articles = await Article_1.Article.find({ owner: user.id });
-        if (!articles) {
-            return void res.status(404).json({ message: "Articles not found" });
-        }
-        return void res.status(200).json(articles);
+        const collections = await Collection_1.Collection.find({ owner: user._id });
+        const articles = await Article_1.Article.find({ owner: user._id });
+        const constructBoard = (collections, articles) => {
+            const board = collections.map((collection) => ({
+                _id: collection._id,
+                title: collection.title,
+                owner: collection.owner,
+                articles: articles.filter((article) => (article.parent == collection._id))
+            }));
+            return board;
+        };
+        const board = constructBoard(collections, articles);
+        return void res.status(200).json(board);
     }
     catch (error) {
         console.error(`Error while fetcing user's articles: ${error}`);
@@ -101,8 +129,8 @@ apiRouter.delete("/article", validateToken_1.validateUser, async (req, res) => {
     }
     try {
         const user = req.user;
-        const existingArticle = await Article_1.Article.findById(req.body.id);
-        if (existingArticle && (user.id === existingArticle.owner || user.isAdmin)) {
+        const existingArticle = await Article_1.Article.findById(req.body._id);
+        if (existingArticle && (user._id === existingArticle.owner || user.isAdmin)) {
             Article_1.Article.deleteOne({ id: existingArticle.id });
             return void res.status(200).json({ message: `Article '${existingArticle.id}' deleted.` });
         }
@@ -112,5 +140,13 @@ apiRouter.delete("/article", validateToken_1.validateUser, async (req, res) => {
         console.error(`Error while deleting article: ${error}`);
         return void res.status(500).json({ message: "Server error while deleting article." });
     }
+});
+apiRouter.get("/validateToken", validateToken_1.validateUser, async (req, res) => {
+    const validationErrors = (0, express_validator_1.validationResult)(req);
+    if (!validationErrors.isEmpty()) {
+        console.error(`ValidationErrors ${validationErrors}`);
+        return void res.status(403).json({ message: `Bad token or no token` });
+    }
+    return void res.status(200).json({ message: "valid token" });
 });
 exports.default = apiRouter;

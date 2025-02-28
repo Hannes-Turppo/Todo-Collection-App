@@ -13,6 +13,12 @@ const myTheme = createTheme({
       main: "#ffffff"
     },
   },
+  typography: {
+    button:{
+      textTransform: "none",
+    }
+  }
+  
 })
 
 

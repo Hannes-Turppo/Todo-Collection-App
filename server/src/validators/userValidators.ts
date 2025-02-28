@@ -1,23 +1,28 @@
 import {body} from 'express-validator';
 
 const registerValidators = () => {
+    const emailMessage: string = "Provide a valid email";
+    const usernameMessage: string = "Username must be at least 4 characters long";
+    const passwordMessage: string = "Password must be at least 8 characters long and include uppercase and lowercase letters, numbers and special characters (#!&?)";
+
     return [
-        body("email").escape().trim().isEmail(),
+        body("email").escape().trim().isEmail().withMessage(emailMessage),
+        body("username").escape().trim().isLength({min: 4}).withMessage(usernameMessage),
         body("password")
             .escape()
-            .isLength({min: 8})
-            .matches(/[A-Z]/).withMessage("")
-            .matches(/[a-z]/).withMessage("")
-            .matches(/[0-9]/).withMessage("")
-            .matches(/[#!&?]/).withMessage(""),
-        body("username").escape().trim(),
-        body("isAdmin").escape().trim()
+            .isLength({min: 8}).withMessage(passwordMessage)
+            // .matches(/[A-Z]/).withMessage(passwordMessage)
+            // .matches(/[a-z]/).withMessage(passwordMessage)
+            // .matches(/[0-9]/).withMessage(passwordMessage)
+            // .matches(/[#!&?]/).withMessage(passwordMessage),
     ]
 };
 
 const loginValidators = () => {
+    const emailMessage: string = "Provide a valid email";
+
     return [
-        body("email").escape().trim().isEmail(),
+        body("email").escape().trim().isEmail().withMessage(emailMessage),
         body("password").escape()
     ]
 };

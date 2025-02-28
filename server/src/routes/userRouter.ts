@@ -14,24 +14,43 @@ const userRouter: Router = Router()
 
 // router functionality
 
+// get user information base on token
+userRouter.get("/", validateUser, async (req: userRequest, res: Response) => {
+    try {
+        if (req.user) {
+            const user = await User.findById(req.user._id)
+            if (user) {
+                return void res.status(200).json({
+                    userId: user._id,
+                    email: user.email,
+                    username: user.username,
+                    isAdmin: user.isAdmin || false,
+                })
+            }
+            return void res.status(404).json({message: "User not found."})                
+        }
+        return void res.status(404).json({message: "User not found."})
+    } catch (error: any) {
+        console.error(error)
+        return void res.status(500).json({message: "Server error while fetching user data."})
+    }
+})
+
 // create new user
 userRouter.post("/register", registerValidators(), async (req: Request, res: Response) => {
     // check for errors in user input
     const validationErrors: Result<ValidationError> = validationResult(req);
     if (!validationErrors.isEmpty()) {
         console.log(`Validation errors: ${validationErrors}`)
-        return void res.status(400).json({message: "Bad request"})
+        return void res.status(401).json(validationErrors)
     }
-
-    console.log(req.body)
 
     try {
         // check if user exists:
         const existingUser: IUser | null = await User.findOne({email: req.body.email})
         if (existingUser) {
-            return void res.status(500).json({message: `Email ${req.body.email} already exists.`})
+            return void res.status(403).json({message: `Email ${req.body.email} already exists.`})
         }
-
         // encrypt password
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(req.body.password, salt)
@@ -40,7 +59,8 @@ userRouter.post("/register", registerValidators(), async (req: Request, res: Res
         await User.create({
             email: req.body.email,
             username: req.body.username,
-            password: hash
+            password: hash,
+            isAdmin: false,
         })
 
         return void res.status(200).json({message: `User ${req.body.email} created.`})
@@ -53,13 +73,13 @@ userRouter.post("/register", registerValidators(), async (req: Request, res: Res
 
 
 // login
-userRouter.post("/login", loginValidators(), async (req: Request, res: Response) => {
+userRouter.post("/login", loginValidators(),  async (req: Request, res: Response) => {
 
     // Check validation errors. If errors, return 403
     const validationErrors: Result<ValidationError> = validationResult(req);
     if (!validationErrors.isEmpty()) {
         console.error(`ValidationErrors ${validationErrors}`)
-        return void res.status(403).json({message: `Bad request`})
+        return void res.status(401).json(validationErrors)
     }
 
     // handle login
@@ -67,7 +87,7 @@ userRouter.post("/login", loginValidators(), async (req: Request, res: Response)
         // find user:
         const user: IUser | null = await User.findOne({email: req.body.email})
         if (!user) {
-            return void res.status(401).json("Invalid credentials")
+            return void res.status(401).json({errors:[{msg:"Invalid credentials"}]})
         }
 
         // check for correct password if the user exists. If correct, create and return JWT
@@ -84,6 +104,7 @@ userRouter.post("/login", loginValidators(), async (req: Request, res: Response)
 
             return void res.status(200).json({success: true, token})
         }
+        return void res.status(401).json({errors:[{msg:"Invalid credentials"}]})
 
 
     } catch (error: any) {
@@ -104,10 +125,10 @@ userRouter.post("/delete", validateUser, async ( req: userRequest, res: Response
             return void res.status(400).json({message: `Bad request`})
         }
 
-        // if user deletes itself or is admin deleting another user, delete user's collections and then the user itself.
+        // if user deletes itself or is admin deleting another user, delete user's Board and then the user itself.
         if ( existingUser && ( user.id === req.body.id || user.isAdmin )) {
 
-            // Delete user's collections
+            // Delete user's Board
             await Collection.deleteMany({parent: req.body.id})
 
             // Delete user
@@ -125,7 +146,7 @@ userRouter.post("/delete", validateUser, async ( req: userRequest, res: Response
     // Error handling
     } catch (error: any) {
         console.error(`Error while deleting user: ${error}`)
-        return void res.status(500).json({message: `Error while deleting collections`})
+        return void res.status(500).json({message: `Error while deleting Board`})
     }
 })
 

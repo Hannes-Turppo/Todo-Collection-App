@@ -3,14 +3,16 @@ import { IArticle } from "./Article"
 
 interface ICollection extends Document {
     owner: string
-    name: string
+    title: string
+    children: mongoose.Types.ObjectId[]
 }
 
-const collectionSchema = new Schema({
+const Boardchema = new Schema({
     owner: { type: String, required: true },
-    name: { type: String, required: true }
+    title: { type: String, required: true },
+    children: [{ type: Schema.Types.ObjectId, ref: "Article", required: true, default: [] }]
 })
 
-const Collection: mongoose.Model<ICollection> = mongoose.model<ICollection>("Collection", collectionSchema)
+const Collection: mongoose.Model<ICollection> = mongoose.model<ICollection>("Collection", Boardchema)
 
 export { Collection, ICollection }

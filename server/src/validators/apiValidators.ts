@@ -14,7 +14,7 @@ const articleValidators = () => {
 const collectionValidators = () => {
     return [
         body("owner").escape(),
-        body("name").escape()
+        body("title").escape()
     ]
 }
 
