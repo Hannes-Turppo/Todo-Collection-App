@@ -211,8 +211,16 @@ apiRouter.get("/get/board", validateUser, async (req: userRequest, res: Response
     // get and construct user's board element (ICollection[])
     try {
         const user: any = req.user
-        // fetch user's board from DB
-        const board: ICollection[] = await Collection.find({owner: user._id}).populate("articles")
+        // fetch items from DB
+        const collections: ICollection[] = await Collection.find({owner: user._id})
+        const articles: IArticle[] = await Article.find({owner: user._id})
+
+        // compose board element
+        const board = {
+            collections: collections,
+            articles: articles,
+        }
+
 
         // return board to client
         return void res.status(200).json(board)

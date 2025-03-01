@@ -14,13 +14,14 @@ import EditCollection from './Options/EditCollectionDialog';
 
 interface collectionProps {
   collection: ICollection
+  articleList: IArticle[]
   deleteFromBoard: (_id: Types.ObjectId) => void
 }
 
-function collection ({collection, deleteFromBoard}: collectionProps) {
+function collection ({collection, articleList, deleteFromBoard}: collectionProps) {
   const [loading, setLoading] = React.useState<boolean>(true)
   const [title, setTitle] = React.useState<string>(() => {return collection.title})
-  const [articles, setArticles] = React.useState<IArticle[]>(() => {return collection.articles})
+  const [articles, setArticles] = React.useState<IArticle[]>(() => {return articleList})
 
   
   // not strictly functional, but necessary to init EditArticleDialog

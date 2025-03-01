@@ -1,6 +1,6 @@
 import { Box, Button, Grid2, IconButton, Paper, Typography } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add';
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Loading from '../Loading'
 import Collection from './Collection'
 import { Link, useNavigate } from 'react-router-dom';
@@ -8,15 +8,18 @@ import { ICollection } from '../../interfaces/ICollection';
 import { IUser } from '../../interfaces/IUser';
 import EditCollection from './Options/EditCollectionDialog';
 import { Types } from 'mongoose';
+import { IBoard } from '../../interfaces/IBoard';
+import { IArticle } from '../../interfaces/IArticle';
 
 interface collectionProps {
   validToken: boolean
   user: IUser | null
-  board: ICollection[]
+  board: IBoard
 }
 
 function Board({ validToken, user, board }: collectionProps) {
-  const [collections, setCollections] = React.useState<ICollection[]>(() => {return board})
+  const [collections, setCollections] = React.useState<ICollection[]>(() => {return board.collections})
+  const [articles, setArticles] = useState<IArticle[]>(() => {return board.articles})
   const [loading, setLoading] = React.useState<boolean>(() => {return true})
   
   const navigate = useNavigate()
@@ -154,7 +157,7 @@ function Board({ validToken, user, board }: collectionProps) {
                   >
                     {
                       collections.map((collection) => (
-                        <Collection key={collection._id.toString()} collection={collection} deleteFromBoard={deleteCollection}/>
+                        <Collection key={collection._id.toString()} collection={collection} articleList={articles.filter((article) => (article.parent == collection._id))} deleteFromBoard={deleteCollection}/>
                       ))
                     }
                   </Grid2>

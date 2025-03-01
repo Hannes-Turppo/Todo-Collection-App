@@ -1,6 +1,7 @@
 import mongoose, {Document, Schema, Types} from "mongoose"
 
 interface IArticle extends Document {
+    id: string
     parent: Types.ObjectId
     owner: Types.ObjectId
     color: string
@@ -10,6 +11,7 @@ interface IArticle extends Document {
 }
 
 const articleSchema = new Schema ({
+    id: {type: String, unique:false, default:""},
     owner: {type: Schema.Types.ObjectId, ref: "User", required: true},
     parent: {type: Schema.Types.ObjectId, ref: "Collection", required: true},
     color: {type: String, required: true},
