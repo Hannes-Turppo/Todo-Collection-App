@@ -2,14 +2,15 @@ import { Button, Dialog, DialogActions, DialogTitle, Menu, MenuItem } from '@mui
 import React from 'react'
 
 interface articleMenuProps {
-  anchorEl: HTMLElement | null
   open: boolean
   setOpen: (open: boolean) => void
+  mode: string
+  anchorEl: HTMLElement | null
   openEdit: () => void
-  deleteArticle: () => void
+  deleteObject: () => void
 }
 
-function articleOptions({ anchorEl, open, setOpen, openEdit, deleteArticle }: articleMenuProps) {
+function Options({ mode, anchorEl, open, setOpen, openEdit, deleteObject }: articleMenuProps) {
   const [openDelete, setOpenDelete] = React.useState<boolean>(() => {return false})
 
   // Ask user if they really want to delete
@@ -26,7 +27,7 @@ function articleOptions({ anchorEl, open, setOpen, openEdit, deleteArticle }: ar
   const handleDelete = () => {
     setOpenDelete(false)
     setOpen(false)
-    deleteArticle()
+    deleteObject()
   }
 
   // Open dialog to edit article
@@ -47,14 +48,14 @@ function articleOptions({ anchorEl, open, setOpen, openEdit, deleteArticle }: ar
 
       {/* Prompt the user if they try to delete article */}
       <Dialog open={openDelete} onClose={closeDelete} sx={{ zIndex: 2000 }}>
-        <DialogTitle>Are you sure you want to delete this article?</DialogTitle>
+        <DialogTitle>Are you sure you want to delete this {mode}?</DialogTitle>
         <DialogActions>
-          <Button variant='outlined' onClick={closeDelete}>NO</Button>
-          <Button variant='contained' onClick={handleDelete}>YES</Button>
+          <Button variant='outlined' onClick={closeDelete}>Cancel</Button>
+          <Button variant='contained' onClick={handleDelete}>Delete</Button>
         </DialogActions>
       </Dialog>
     </Menu>
   )
 }
 
-export default articleOptions
+export default Options

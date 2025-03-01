@@ -1,9 +1,6 @@
 import { ICollection } from "../interfaces/ICollection"
-import React from "react"
 
-export function useBoard() {
-  const [Board, setBoard] = React.useState<ICollection[]>(() => {return []})
-  
+export function useBoard() {  
   const getBoard = async () => {
     try {
       const token: string | null = localStorage.getItem("token")
@@ -16,8 +13,7 @@ export function useBoard() {
       if (res.ok) {
         const data: ICollection[] = await res.json()
         if (data) {
-          setBoard(data)
-          return data as ICollection[]
+          return data
         }
       } else {
         console.error("Failed to fetch Board:", res.statusText)
@@ -29,6 +25,5 @@ export function useBoard() {
       return []
     }
   }
-
-  return { Board, getBoard }
+  return {getBoard}
 }

@@ -6,31 +6,131 @@ import AddIcon from '@mui/icons-material/Add';
 import Article from './Article';
 import Loading from '../Loading';
 import { useNavigate } from 'react-router-dom';
+import { IArticle } from '../../interfaces/IArticle';
+import { Types } from 'mongoose';
+import EditArticle from './Options/EditArticleDialog';
+import Options from './Options/Options';
+import EditCollection from './Options/EditCollectionDialog';
 
 interface collectionProps {
   collection: ICollection
+  deleteFromBoard: (_id: Types.ObjectId) => void
 }
 
-function collection ({collection}: collectionProps) {
+function collection ({collection, deleteFromBoard}: collectionProps) {
   const [loading, setLoading] = React.useState<boolean>(true)
+  const [title, setTitle] = React.useState<string>(() => {return collection.title})
+  const [articles, setArticles] = React.useState<IArticle[]>(() => {return collection.articles})
+
+  
+  // not strictly functional, but necessary to init EditArticleDialog
+  const [placeholderTitle, setNewTitle] = React.useState<string>(() => {return ""})
+  const [placeholderContent, setNewContent] = React.useState<string>(() => {return ""})
+  // const [] = React.useState<>()
+
+  // State for handling article creation
+  const [openCArticle, setOpenCArticle] = React.useState<boolean>(() => {return false})
+  
+  // open creation window
+  const openCreateArticle = () => {
+    setOpenCArticle(true)
+  }
+  
+  // close creation window
+  const handleCloseCreate = () => {
+    setOpenCArticle(false)
+  }
+  
+  // Save new article
+  const createArticle = async (title: string, content: string) => {
+
+    const res = await fetch("/api/article/create", {
+      method: "post",
+      headers: {
+        "authorization": `Bearer: ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: title,
+        content: content,
+        parent: collection._id,
+        color: "blue",
+        tags: [],
+      })
+    })
+    if (res.ok) {
+      const newArticle = await res.json()
+      setArticles([...articles, newArticle])
+    }
+    return
+  }
+
+  // Delete article from DB and remove deleted article from view
+  const deleteFromCollection = async (article: IArticle) => {
+    const res = await fetch("/api/article", {
+      method: "delete",
+      headers: {
+        "authorization": `Bearer: ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json",
+      }, 
+      body: JSON.stringify({
+        _id: article._id,
+        parent: article.parent
+      })
+    })
+    // if deleted
+    if (res.ok) {
+      const data = await res.json()
+      console.log(data.message)
+      setArticles(articles.filter((element) => element._id !== article._id))
+    }
+  }
 
 
+  // //////////////////////////////////////////////////////////////////// Collection functionality
+  // states for handling collection options
+  const [openOptions, setOpenOptions] = React.useState<boolean>(() => {return false})
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(() => {return null})
+  const [openEdit, setOpenEdit] = React.useState<boolean>(() => {return false})
+
+  // helper functions to manage editing collection
+  
+  const openCollectionOptions = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+    setOpenOptions(true)
+  }
+
+  const editCollection=() => {
+    setOpenEdit(true)
+  }
+
+  const saveCollection = async (title: string) => {
+    const res = await fetch("api/collection/edit", {
+      method: "post",
+      headers: {
+        "authorization": `Bearer: ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        _id: collection._id,
+        title: title
+      })
+    })
+    if (res.ok) {
+      setTitle(title)
+    }
+  }
+
+  const deleteCollection = () => {
+    deleteFromBoard(collection._id)
+  }
+  
+
+  // init component when navigated to
   const navigate = useNavigate()
   useEffect (() => {
-    const init = () => {
-      setLoading(false)
-    }
-    init()
+    setLoading(false)
   },[navigate])
-  
-  // making a new article inside a collection
-  const createArticle = (event: React.MouseEvent) => {
-  }
-
-
-  const editCollection=(event: React.MouseEvent) => {
-    console.log("doubleclick")
-  }
 
   return (
     <>
@@ -38,93 +138,108 @@ function collection ({collection}: collectionProps) {
         <Loading />
       ) : 
       (
-        // collection component
-        <Grid2 size={{lg:3, md:4, sm:6, xs:12}}>
-          <Paper
-            sx={{
-              elevation: 15,
-              border: 1,
-              width: 1,
-              my: 1,
-              mx: 0.5,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            {/* Component header */}
-            <Paper
-              onDoubleClick={editCollection}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                elevation: 20,
-                bgcolor: "inherit",
-              }}
-              >
-              <Typography 
-                variant='h5'
-                sx={{
-                  alignContent:"center",
-                  mx:1,
-                }}
-                >
-                {collection.title}
-              </Typography>
-              {/* component options */}
-              <IconButton
-                onClick={editCollection}
-                sx={{
-                  height: "100%",
-                  borderRadius:2
-                }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            </Paper>
+        <>
+          {/* displayed when article is doubleclicked or can be opened trough menu */}
+          <EditArticle mode="Create new" open={openCArticle} onClose={handleCloseCreate} saveArticle={createArticle} setTitle={setNewTitle} setContent={setNewContent}
+          article={{ _id: new Types.ObjectId, parent: collection._id, owner: new Types.ObjectId, title: "", content: "", color: "blue", tags: [], }}/>
 
-            {/* Component content */}
-            <Box
+
+          {/* Edit collection dialog */}
+          <EditCollection mode="Edit" collection={collection} open={openEdit} setOpen={setOpenEdit} saveCollection={saveCollection}></EditCollection>
+
+
+          {/* collection component */}
+          <Grid2 size={{lg:3, md:4, sm:6, xs:12}}>
+            <Paper
               sx={{
-                width:"100%",
-                height:"100%",
-                m:0,
-                p:0,
+                elevation: 15,
+                border: 1,
+                minHeight: 260,
+                width: 1,
+                my: 1,
+                mx: 0.5,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
               }}
             >
-              <Grid2
-                key="article-grid"
-                container
-                spacing={1}
+              {/* Component header */}
+              <Paper
+                onDoubleClick={editCollection}
                 sx={{
-                  p:1
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  elevation: 20,
+                  bgcolor: "inherit",
                 }}
-              > 
-                {collection.articles.map((article) => (
-                  <Article 
-                    key={article._id.toString()}
-                    article={article}
-                  />
-                ))}
-              </Grid2>
-            </Box>
+                >
+                <Typography 
+                  variant='h5'
+                  sx={{
+                    alignContent:"center",
+                    mx:1,
+                  }}
+                  >
+                  {title}
+                </Typography>
 
-            {/* Add article button */}
-            <IconButton
-              onClick={createArticle}
-              sx={{
-                width:"100%",
-                borderRadius: 1,
-                m:0,
-                bgcolor: "inherit",
-                border:1
-              }}
+                {/* component options */}
+                <IconButton
+                  onClick={openCollectionOptions}
+                  sx={{
+                    height: "100%",
+                    borderRadius:2
+                  }}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+                <Options open={openOptions} setOpen={setOpenOptions} mode='collection' anchorEl={anchorEl} openEdit={editCollection} deleteObject={deleteCollection}/>
+              </Paper>
+
+              {/* Component content */}
+              <Box
+                sx={{
+                  width:"100%",
+                  height:"100%",
+                  m:0,
+                  p:0,
+                }}
               >
-              <AddIcon />
-            </IconButton>
-          </Paper>
-        </Grid2>
+                <Grid2
+                  key={`articleGrid_${collection._id.toString()}`}
+                  container
+                  spacing={1}
+                  sx={{
+                    p:1
+                  }}
+                > 
+                  {articles.map((article) => (
+                    <Article 
+                      key={article._id.toString()}
+                      article={article}
+                      deleteFromCollection={deleteFromCollection}
+                    />
+                  ))}
+                </Grid2>
+              </Box>
+
+              {/* Add article button */}
+              <IconButton
+                onClick={openCreateArticle}
+                sx={{
+                  width:"100%",
+                  borderRadius: 1,
+                  m:0,
+                  bgcolor: "inherit",
+                  border:1
+                }}
+                >
+                <AddIcon />
+              </IconButton>
+            </Paper>
+          </Grid2>
+        </>
       )}
     </>
   )

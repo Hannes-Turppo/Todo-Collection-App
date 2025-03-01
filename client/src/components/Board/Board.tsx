@@ -6,6 +6,8 @@ import Collection from './Collection'
 import { Link, useNavigate } from 'react-router-dom';
 import { ICollection } from '../../interfaces/ICollection';
 import { IUser } from '../../interfaces/IUser';
+import EditCollection from './Options/EditCollectionDialog';
+import { Types } from 'mongoose';
 
 interface collectionProps {
   validToken: boolean
@@ -14,24 +16,61 @@ interface collectionProps {
 }
 
 function Board({ validToken, user, board }: collectionProps) {
+  const [collections, setCollections] = React.useState<ICollection[]>(() => {return board})
   const [loading, setLoading] = React.useState<boolean>(() => {return true})
   
   const navigate = useNavigate()
   useEffect (() => {
     const init = () => {
-      console.log("init")
+      console.log("Init board")
       setLoading(false)
     }
     init()
   },[navigate])
+  
+  // ////////////////////////////////// functionality for creating new collection
+  const [openCCollection, setOpenCCollection] = React.useState<boolean>(() => {return false})
 
-
-  // button functionality
-  const createCollection = (event: React.MouseEvent) => {
-    const parent = event.target
-    console.log(parent)
+  const openCreate = () => {
+    setOpenCCollection(true)
   }
 
+  const saveNewCollection = async (title: string) => {
+    console.log(title)
+    const res = await fetch("/api/collection/create", {
+      method: "post",
+      headers: {
+        "authorization": `Bearer: ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: title
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setCollections([...collections, data])
+    }
+  }
+
+  // delete existing collection
+  const deleteCollection = async (_id: Types.ObjectId) => {
+    const res = await fetch("/api/collection", {
+      method: "delete",
+      headers: {
+        "authorization": `Bearer: ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        _id: _id
+      })
+    })
+    if (res.ok) {
+      setCollections(collections.filter((collection) => (collection._id != _id)))
+    }
+  }
+
+  // component
   return (
 
     <>
@@ -40,6 +79,17 @@ function Board({ validToken, user, board }: collectionProps) {
       ) : (
         (validToken) ? (
           <>
+            {/* create collection dialog */}
+            <EditCollection mode="Create" open={openCCollection} setOpen={setOpenCCollection} saveCollection={saveNewCollection} 
+            collection={{
+              // new ICollection-object to edit
+              _id: new Types.ObjectId,
+              owner: new Types.ObjectId,
+              title: "",
+              articles: [],
+            }} />
+
+
             {/* If user is logged in, show user's Board */}
             <Box
               component="div"
@@ -89,7 +139,7 @@ function Board({ validToken, user, board }: collectionProps) {
                       mr:1,
                       ml:"auto",
                     }}
-                    onClick={createCollection}
+                    onClick={openCreate}
                   >
                     <AddIcon></AddIcon>
                   </IconButton>
@@ -100,11 +150,11 @@ function Board({ validToken, user, board }: collectionProps) {
                   <Grid2 
                     container
                     spacing={1}
-                    sx={{ borderRadius:1, p:1, pt:2, pr:2, mt:-1, width: 1, bgcolor:"whitesmoke" }}
+                    sx={{ borderRadius:1, p:1, pt:2, pr:2, mt:-1, width: 1, bgcolor:"whitesmoke", minHeight: 300 }}
                   >
-                    { 
-                      board.map((collection) => (
-                        <Collection key={collection._id.toString()} collection={collection}/>
+                    {
+                      collections.map((collection) => (
+                        <Collection key={collection._id.toString()} collection={collection} deleteFromBoard={deleteCollection}/>
                       ))
                     }
                   </Grid2>

@@ -21,7 +21,7 @@ userRouter.get("/", validateUser, async (req: userRequest, res: Response) => {
             const user = await User.findById(req.user._id)
             if (user) {
                 return void res.status(200).json({
-                    userId: user._id,
+                    _id: user._id,
                     email: user.email,
                     username: user.username,
                     isAdmin: user.isAdmin || false,
@@ -95,7 +95,7 @@ userRouter.post("/login", loginValidators(),  async (req: Request, res: Response
 
             // JWT payload
             const jwtPayload: JwtPayload = {
-                _id: user.id,
+                _id: user._id,
                 isAdmin: user.isAdmin
             }
 

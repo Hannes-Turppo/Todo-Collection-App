@@ -6,6 +6,7 @@ import Loading from './Loading'
 import Board from './Board/Board'
 import { useNavigate } from 'react-router-dom'
 import { IUser } from '../interfaces/IUser'
+import { Types } from 'mongoose'
 
 function home() {
   const [loading, setLoading] = React.useState<boolean>(() => {return true})
@@ -33,7 +34,10 @@ function home() {
               "authorization": `Bearer: ${localStorage.getItem("token")}`
             }
           })
-          if (res.ok) setUser(await res.json())
+          if (res.ok) {
+            const data = await res.json() as IUser
+            setUser(data)
+          }
         }
       
         const Board: ICollection[] = await getBoard()

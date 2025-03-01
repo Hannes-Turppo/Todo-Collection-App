@@ -1,38 +1,32 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
-import { IArticle } from '../../interfaces/IArticle'
+import { ICollection } from '../../../interfaces/ICollection'
 import React, { useEffect } from 'react'
 
 interface dialogProps {
-  article: IArticle
+  mode: string
+  collection: ICollection
   open: boolean
-  onClose: () => void
-  setTitle: (title: string) => void
-  setContent: (title: string) => void
-  saveArticle: (title: string, content: string) => void
+  setOpen: (open: boolean) => void
+  saveCollection: (title: string) => void
 }
 
-function EditArticle({ article, open, onClose, saveArticle, setTitle, setContent }: dialogProps) {
+function EditCollection({ mode, collection, open, setOpen, saveCollection }: dialogProps) {
   const [loading, setLoading] = React.useState<boolean>(true)
   const [localTitle, setLocalTitle] = React.useState<string>(() => {return ""})
-  const [localContent, setLocalContent] = React.useState<string>(() => {return ""})
-  // const [] = React.useState<>()
 
   const handleSave = () => {
-    setTitle(localTitle)
-    setContent(localContent)
-    saveArticle(localTitle, localContent)
-    onClose()
+    saveCollection(localTitle)
+    setOpen(false)
   }
 
   const handleClose = () => {
-    onClose()
+    setOpen(false)
   };
 
   useEffect(() => {
-    setLocalTitle(article.title)
-    setLocalContent(article.content)
+    setLocalTitle(collection.title)
     setLoading(false)
-  }, [article])
+  }, [collection])
 
   return (
     <>
@@ -45,7 +39,7 @@ function EditArticle({ article, open, onClose, saveArticle, setTitle, setContent
             zIndex: 2000,
           }}
         >
-          <DialogTitle>Edit article</DialogTitle>
+          <DialogTitle>{mode} collection</DialogTitle>
           <DialogContent
             sx={{
               display: "flex",
@@ -63,14 +57,6 @@ function EditArticle({ article, open, onClose, saveArticle, setTitle, setContent
               sx={{ mt: 1 }}
             />
 
-            <TextField
-              multiline={true}
-              id="contentField"
-              label="Content"
-              value={localContent}
-              onChange={(e) => {setLocalContent(e.target.value)}}
-            />
-
           </DialogContent>
           <DialogActions>
             <Button variant='contained' onClick={handleSave}>Save</Button>
@@ -82,4 +68,4 @@ function EditArticle({ article, open, onClose, saveArticle, setTitle, setContent
   )
 }
 
-export default EditArticle
+export default EditCollection

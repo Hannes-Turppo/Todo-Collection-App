@@ -3,15 +3,16 @@ import { Grid2, IconButton, Paper, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IArticle } from '../../interfaces/IArticle';
 import Loading from '../Loading';
-import EditArticle from './EditArticleDialog';
+import EditArticle from './Options/EditArticleDialog';
 import { useNavigate } from 'react-router-dom';
-import ArticleOptions from './articleOptions';
+import Options from './Options/Options';
 
 interface articleProps {
   article: IArticle
+  deleteFromCollection: (articleId: IArticle) => void
 }
 
-function Article({article}: articleProps) {
+function Article({article, deleteFromCollection}: articleProps) {
   const [loading, setLoading] = React.useState<boolean>(true)
   const [openOptions, setOpenOptions] = React.useState<boolean>(() => {return false})
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(() => {return null})
@@ -53,11 +54,11 @@ function Article({article}: articleProps) {
       console.log(`Saving article failed: ${data.message}`)
       return
     }
-
   }
 
-  const handleDeleteArticle = () => {
-
+  // Uses deleteFromCollection in collection.tsx to delete specified article
+  const handleDeleteArticle = async () => {
+    deleteFromCollection(article)
   }
 
   const navigate = useNavigate()
@@ -73,13 +74,14 @@ function Article({article}: articleProps) {
         ) : (
           <>
             {/* displayed when article is doubleclicked or can be opened trough menu */}
-            <EditArticle open={editingArticle} onClose={handleCloseEdit} article={article} saveArticle={handleSaveArticle} setTitle={setTitle} setContent={setContent}/>
+            <EditArticle mode="Edit" open={editingArticle} onClose={handleCloseEdit} article={article} saveArticle={handleSaveArticle} setTitle={setTitle} setContent={setContent}/>
 
             <Paper
               onDoubleClick={handleOpenEdit}
               sx={{
                 elevation: 20,
-                border:1,
+                border: 1,
+                minHeight: 150,
               }}
               >
               <Paper sx={{
@@ -94,7 +96,7 @@ function Article({article}: articleProps) {
                 <IconButton onClick={openMenu}>
                   <MoreVertIcon />
                 </IconButton>
-                <ArticleOptions open={openOptions} setOpen={setOpenOptions} openEdit={handleOpenEdit} anchorEl={anchorEl} deleteArticle={handleDeleteArticle}/>
+                <Options mode="article" open={openOptions} setOpen={setOpenOptions} openEdit={handleOpenEdit} anchorEl={anchorEl} deleteObject={handleDeleteArticle}/>
 
               </Paper>
               <Typography sx={{m:1, minHeight:100, }}>{content}</Typography>

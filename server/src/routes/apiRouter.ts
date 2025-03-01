@@ -4,100 +4,12 @@ import { Collection, ICollection } from "../models/Collection"
 import { Article, IArticle } from "../models/Article"
 import { userRequest, validateUser } from "../middleware/validateToken"
 import { articleValidators, collectionValidators } from "../validators/apiValidators"
-import { IUser } from "../models/User"
+import { IUser, User } from "../models/User"
 import { Types } from "mongoose"
 
 
 // init router
 const apiRouter: Router = Router()
-
-
-
-// Create new collection
-// req.body: {
-//     owner: string
-//     title: string
-// }
-// req.headers: {
-//     auth: JWT
-// }
-// req.user: {
-//     id: string
-//     isAdmin: boolean
-// }
-apiRouter.post("/collection", validateUser, collectionValidators(), async ( req: userRequest, res: Response ) =>{
-    // Check validation errors. If errors, return 403
-    const validationErrors: Result<ValidationError> = validationResult(req);
-    if (!validationErrors.isEmpty()) {
-        console.error(`ValidationErrors ${validationErrors}`)
-        return void res.status(403).json({message: `Bad request`})
-    }
-
-
-    // create new collection
-    try {
-        const user: any = req.user
-        // if collection already exists, return 500.
-        const existingBoard: ICollection[] | null = await Collection.find({title: req.body.title})
-        existingBoard.map((collection) => {
-
-            if (collection.owner === user._id) {
-                return void res.status(500).json({message: `Collection with title ${req.body.title} already exists.`})
-            }
-        })
-            
-        // If collection not found in DB, create collection and return 200:
-        Collection.create({
-            owner: user._id,
-            title: req.body.title,
-        })
-
-        return void res.status(200).json({message: `Collection ${req.body.title} created.`})
-
-    } catch (error: any) {// handle errors
-        console.error(`Error while creating collection: ${error}`)
-        return void res.status(400).json({message: "Error while creating collection"})
-    }
-})
-
-
-// Get user's Board
-// req.body: {}
-// req.headers: {
-//     auth: JWT
-// }
-// req.headers: {
-//     auth: JWT
-// }
-// req.user: {
-//     id: string
-//     isAdmin: boolean
-// }
-apiRouter.get("/Board", validateUser, async ( req: userRequest, res: Response ) =>{
-    // Check validation errors. If errors, return 403
-    const validationErrors: Result<ValidationError> = validationResult(req);
-    if (!validationErrors.isEmpty()) {
-        console.error(`ValidationErrors ${validationErrors}`)
-        return void res.status(403).json({message: `Bad request`})
-    }
-
-
-    try {
-        const user: any = req.user
-        // get user's Board from db
-        const Board: ICollection[] | null = await Collection.find({owner: user._id})
-        if (!Board) { // If no Board are found
-            return void res.status(404).json({message: `No Board found`})
-        }
-
-        // return found Board
-        return void res.status(200).json(Board)
-
-    } catch (error: any) {
-        console.error(`Error while fetching Board: ${error}`)
-        return void res.status(500).json({message: `Error while fetching Board.`})
-    }
-})
 
 
 // Create new article
@@ -112,7 +24,7 @@ apiRouter.get("/Board", validateUser, async ( req: userRequest, res: Response ) 
 // req.headers: {
 //     auth: JWT
 // }
-apiRouter.post("/article/create", validateUser, articleValidators(), async ( req: userRequest, res: Response) => {
+apiRouter.post("/article/create", validateUser, async ( req: userRequest, res: Response) => {
     // Check validation errors. If errors, return 403
     const validationErrors: Result<ValidationError> = validationResult(req);
     if (!validationErrors.isEmpty()) {
@@ -121,9 +33,9 @@ apiRouter.post("/article/create", validateUser, articleValidators(), async ( req
     }
 
     try{
+        // create new article
         const user: any = req.user
-
-        await Article.create({
+        const newArticle: IArticle = await Article.create({
             owner: user._id,
             parent: req.body.parent,
             color: req.body.color,
@@ -132,8 +44,12 @@ apiRouter.post("/article/create", validateUser, articleValidators(), async ( req
             tags: req.body.tags
         })
 
-        return void res.status(200).json({message: `Article '${req.body.title}' created.`})
+        // insert new article into parent's articles
+        await Collection.updateOne(
+            {_id: newArticle.parent as unknown as Types.ObjectId}, 
+            {$addToSet: {articles: newArticle._id}})
 
+        return void res.status(200).json(newArticle)
     } catch (error: any) {
         console.error(`Error while creating article ${error}`)
         return void res.status(500).json({message: "server error while creating article"})
@@ -150,9 +66,7 @@ apiRouter.post("/article/save", validateUser, async ( req: userRequest, res: Res
     }
 
     try {
-        console.log(req.body)
-        // get article from db
-        const oldArticle = await Article.findOne({_id: req.body._id})
+        // update article in db
         await Article.updateOne({_id: req.body._id as Types.ObjectId}, {
             title: req.body.title,
             content: req.body.content,
@@ -162,49 +76,6 @@ apiRouter.post("/article/save", validateUser, async ( req: userRequest, res: Res
     } catch (error: any) {
         console.error(error)
         return void res.status(500).json({message: "server error while saving article"})
-    }
-})
-
-
-// get user's articles
-// req.user: {
-//     id: string
-//     isAdmin: boolean
-// }
-apiRouter.get("/get/board", validateUser, async (req: userRequest, res: Response) =>{
-    // Check validation errors. If errors, return 403
-    const validationErrors: Result<ValidationError> = validationResult(req);
-    if (!validationErrors.isEmpty()) {
-        console.error(`ValidationErrors ${validationErrors}`)
-        return void res.status(403).json({message: `Bad request`})
-    }
-
-    // get and construct user's board element (ICollection[])
-    try {
-        const user: any = req.user
-        // fetch user's board from DB
-        const collections: ICollection[] = await Collection.find({owner: user._id})
-        const articles: IArticle[] = await Article.find({owner: user._id})
-
-        // construct board element
-        const constructBoard = (collections: ICollection[], articles: IArticle[]) => {
-            const board = collections.map((collection) => 
-            ({
-                _id: collection._id,
-                title: collection.title,
-                owner: collection.owner,
-                articles: articles.filter((article) => (article.parent == collection._id))
-            }))
-            return board
-        }
-        const board = constructBoard(collections, articles)
-
-        // return board to client
-        return void res.status(200).json(board)
-
-    } catch (error: any) {
-        console.error(`Error while fetcing user's articles: ${error}`);
-        return void res.status(500).json({message: "Server error while fetching articles."})
     }
 })
 
@@ -225,23 +96,130 @@ apiRouter.delete("/article", validateUser, async (req: userRequest, res: Respons
         return void res.status(403).json({message: `Bad request`})
     }
 
-
     try {
         const user: any = req.user
-
         const existingArticle: IArticle | null = await Article.findById(req.body._id)
 
         // if article existis and user has authority to remove it, delete article
-        if (existingArticle && ( user._id === existingArticle.owner || user.isAdmin)) {
-            Article.deleteOne({id: existingArticle.id})
+        if (existingArticle && ( user._id == existingArticle.owner || user.isAdmin)) {
 
-            return void res.status(200).json({message: `Article '${existingArticle.id}' deleted.`})
+            // remove articleId from parent's articles
+            await Collection.updateOne(
+                { _id: existingArticle.parent },
+                { $pull: { articles: existingArticle._id } }
+            )
+
+            // delete from articles
+            await Article.deleteOne({_id: existingArticle._id})
+
+            return void res.status(200).json({message: `Article '${existingArticle.title}' deleted.`})
         }
         return void res.status(404).json({message: `Article not found`})
 
     } catch (error: any) {
         console.error(`Error while deleting article: ${error}`);
         return void res.status(500).json({message: "Server error while deleting article."})
+    }
+})
+
+
+// Create new collection
+apiRouter.post("/collection/create", validateUser, async ( req: userRequest, res: Response ) =>{
+    // Check validation errors. If errors, return 403
+    const validationErrors: Result<ValidationError> = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        console.error(`ValidationErrors ${validationErrors}`)
+        return void res.status(403).json({message: `Bad request`})
+    }
+
+    // create new collection
+    try {
+        console.log(req.body)
+        const user: any = req.user
+        const newCollection: ICollection = await Collection.create({
+            owner: user._id,
+            title: req.body.title,
+            articles: [],
+        })
+        return void res.status(200).json(newCollection)
+
+    } catch (error: any) {// handle errors
+        console.error(`Error while creating collection: ${error}`)
+        return void res.status(500).json({message: "Error while creating collection"})
+    }
+})
+
+
+// Edit collection
+apiRouter.post("/collection/edit", validateUser, async ( req: userRequest, res: Response ) => {
+    // Check validation errors. If errors, return 403
+    const validationErrors: Result<ValidationError> = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        console.error(`ValidationErrors ${validationErrors}`)
+        return void res.status(403).json({message: `Bad request`})
+    }
+
+    try {
+        const user: any = req.user 
+        const collection: ICollection | null = await Collection.findOne({_id: req.body._id})
+        if (collection && (user._id == collection?.owner || user.isAdmin)) {
+
+            await Collection.updateOne(
+                {_id: req.body._id},
+                {$set: {title: req.body.title}}
+            )
+            return void res.status(200).json({message: `Title '${req.body.title}' set`})
+        }
+
+    } catch (error: any) {
+        console.log(error)
+        return void res.status(500).json({message: "Server error while editing article."})
+    }
+})
+
+
+// delete collection
+apiRouter.delete("/collection", validateUser, async ( req: userRequest, res: Response ) => {
+    // Check validation errors. If errors, return 403
+    const validationErrors: Result<ValidationError> = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        console.error(`ValidationErrors ${validationErrors}`)
+        return void res.status(403).json({message: `Bad request`})
+    }
+
+    try {
+        const user: any = req.user
+        const collection: ICollection | null = await Collection.findOne({_id: req.body._id})
+        if (collection && ( user._id == collection.owner || user.isAdmin)) {
+            await Collection.deleteOne({_id: collection._id})
+            return void res.status(200).json({message: `Collection '${collection.title}' deleted.`})
+        }
+        return void res.status(404).json({message: "Collection not found"})
+
+    } catch (error: any) {
+        console.error(error)
+        return void res.status(500).json({message: "server error while deleting collection."})
+    }
+})
+
+// get user's board
+// req.user: {
+//     id: string
+//     isAdmin: boolean
+// }
+apiRouter.get("/get/board", validateUser, async (req: userRequest, res: Response) =>{
+    // get and construct user's board element (ICollection[])
+    try {
+        const user: any = req.user
+        // fetch user's board from DB
+        const board: ICollection[] = await Collection.find({owner: user._id}).populate("articles")
+
+        // return board to client
+        return void res.status(200).json(board)
+
+    } catch (error: any) {
+        console.error(`Error while fetcing user's articles: ${error}`);
+        return void res.status(500).json({message: "Server error while fetching articles."})
     }
 })
 

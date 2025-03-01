@@ -1,16 +1,15 @@
-import mongoose, { Document, Schema } from "mongoose"
-import { IArticle } from "./Article"
+import mongoose, { Document, Schema, Types } from "mongoose"
 
 interface ICollection extends Document {
-    owner: string
+    owner: Types.ObjectId
     title: string
-    children: mongoose.Types.ObjectId[]
+    articles: mongoose.Types.ObjectId[]
 }
 
 const Boardchema = new Schema({
-    owner: { type: String, required: true },
-    title: { type: String, required: true },
-    children: [{ type: Schema.Types.ObjectId, ref: "Article", required: true, default: [] }]
+    owner: {type: Schema.Types.ObjectId, ref: "User", required: true, unique: false},
+    title: { type: String, required: true, unique: false },
+    articles: [{ type: Schema.Types.ObjectId, ref: "Article", required: true, default: [], unique: false }]
 })
 
 const Collection: mongoose.Model<ICollection> = mongoose.model<ICollection>("Collection", Boardchema)

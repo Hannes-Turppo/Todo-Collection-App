@@ -2,7 +2,7 @@ import mongoose, {Document, Schema, Types} from "mongoose"
 
 interface IArticle extends Document {
     parent: Types.ObjectId
-    owner: string
+    owner: Types.ObjectId
     color: string
     title: string
     content: string
@@ -10,8 +10,8 @@ interface IArticle extends Document {
 }
 
 const articleSchema = new Schema ({
-    owner: {type: String, required: true},
-    parent: {type: String, required: true},
+    owner: {type: Schema.Types.ObjectId, ref: "User", required: true},
+    parent: {type: Schema.Types.ObjectId, ref: "Collection", required: true},
     color: {type: String, required: true},
     title: {type: String, required: true},
     content: {type: String, required: true},
