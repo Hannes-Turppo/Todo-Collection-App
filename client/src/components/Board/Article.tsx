@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Grid2, Icon, IconButton, Paper, Tooltip, Typography } from '@mui/material'
+import { Box, Grid2, IconButton, Paper, Tooltip, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IArticle } from '../../interfaces/IArticle';
 import Loading from '../Loading';

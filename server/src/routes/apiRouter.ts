@@ -36,8 +36,11 @@ apiRouter.post("/article/create", validateUser, async ( req: userRequest, res: R
             comments: [],
         })
 
+        
         // return constructed article
         const newArticle: IArticle | null = await Article.findOne({_id: article._id})
+
+        await Collection.updateOne({_id: newArticle?.parent}, {$addToSet:{articles: newArticle?._id}})
 
         return void res.status(200).json(newArticle)
     } catch (error: any) {
@@ -128,6 +131,8 @@ apiRouter.delete("/article", validateUser, async (req: userRequest, res: Respons
             // delete from articles
             await Article.deleteOne({_id: existingArticle._id})
 
+            await Collection.updateOne({_id: existingArticle.parent}, {$pull: {articles: existingArticle._id}})
+
             return void res.status(200).json({message: `Article '${existingArticle.title}' deleted.`})
         }
         return void res.status(404).json({message: `Article not found`})
@@ -155,7 +160,8 @@ apiRouter.post("/collection/create", validateUser, async ( req: userRequest, res
         const newCollection: ICollection = await Collection.create({
             owner: user._id,
             title: req.body.title,
-            color: req.body.color
+            color: req.body.color,
+            articles: [],
         })
         return void res.status(200).json(newCollection)
 
@@ -225,15 +231,7 @@ apiRouter.get("/get/board", validateUser, async (req: userRequest, res: Response
     try {
         const user: any = req.user
         // fetch items from DB
-        const collections: ICollection[] = await Collection.find({owner: user._id})
-        const articles: IArticle[] = await Article.find({owner: user._id})
-
-        // compose board element
-        const board = {
-            collections: collections,
-            articles: articles,
-        }
-
+        const board: ICollection[] = await Collection.find({owner: user._id}).populate("articles")
 
         // return board to client
         return void res.status(200).json(board)

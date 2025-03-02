@@ -26,6 +26,7 @@ function EditCollection({ mode, collection, open, setOpen, saveCollection }: dia
 
   const handleSave = () => {
     saveCollection(localTitle, localColor)
+    setLocalColor("whiteSmoke")
     setOpen(false)
   }
 
