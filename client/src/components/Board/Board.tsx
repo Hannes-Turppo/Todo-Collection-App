@@ -1,4 +1,4 @@
-import { Box, Button, Grid2, IconButton, Paper, Typography } from '@mui/material'
+import { Box, Button, Grid2, IconButton, Paper, TextField, Tooltip, Typography } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add';
 import React, { useEffect, useState } from 'react'
 import Loading from '../Loading'
@@ -73,6 +73,17 @@ function Board({ validToken, user, board }: collectionProps) {
     }
   }
 
+
+  // search field functionality
+  const [searchValue, setSearchValue] = useState<string>(() => {return ""})
+  const [filteredArticles, setFilteredArticles] = useState<IArticle[]>(() => {return articles})
+
+  useEffect (() => {
+    console.log(searchValue)
+    setFilteredArticles(articles.filter((article) => (article.title.includes(searchValue))))
+  }, [searchValue])
+
+
   // component
   return (
 
@@ -89,7 +100,6 @@ function Board({ validToken, user, board }: collectionProps) {
               _id: new Types.ObjectId,
               owner: new Types.ObjectId,
               title: "",
-              articles: [],
             }} />
 
 
@@ -136,16 +146,29 @@ function Board({ validToken, user, board }: collectionProps) {
                   {/* header text */}
                   <Typography variant='h5' sx={{ml:1}}>{`${user?.username}'s Board`}</Typography>
 
-                  {/* add collection button */}
-                  <IconButton
+
+                  {/* Searchfield for filtering articles */}
+                  <TextField 
+                    value={searchValue}
+                    onChange={(e) => {setSearchValue(e.target.value)}}
                     sx={{
-                      mr:1,
-                      ml:"auto",
+                      mr: 0,
+                      ml: "auto",
+                      my:1,
                     }}
-                    onClick={openCreate}
-                  >
-                    <AddIcon></AddIcon>
-                  </IconButton>
+                  />
+
+                  {/* add collection button */}
+                  <Tooltip title="Create collection">
+                    <IconButton
+                      sx={{
+                        mx:1,
+                      }}
+                      onClick={openCreate}
+                    >
+                      <AddIcon></AddIcon>
+                    </IconButton>
+                  </Tooltip>
                 </Paper>
 
                 {/* MUI Grid v2 to work as base for displaying Board */}
@@ -157,7 +180,7 @@ function Board({ validToken, user, board }: collectionProps) {
                   >
                     {
                       collections.map((collection) => (
-                        <Collection key={collection._id.toString()} collection={collection} articleList={articles.filter((article) => (article.parent == collection._id))} deleteFromBoard={deleteCollection}/>
+                        <Collection key={collection._id.toString()} collection={collection} articleList={filteredArticles.filter((article) => (article.parent == collection._id))} deleteFromBoard={deleteCollection}/>
                       ))
                     }
                   </Grid2>

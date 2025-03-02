@@ -1,4 +1,5 @@
 import { Types } from "mongoose"
+import { IComment } from "./IComment"
 
 export interface IArticle {
     _id: Types.ObjectId
@@ -7,5 +8,8 @@ export interface IArticle {
     title: string
     content: string
     color: string
-    tags: string[]
+    due: string
+    editedAt: Date
+    usedTime: string
+    comments: IComment[]
 }

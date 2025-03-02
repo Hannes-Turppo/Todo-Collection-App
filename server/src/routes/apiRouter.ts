@@ -7,23 +7,12 @@ import { articleValidators, collectionValidators } from "../validators/apiValida
 import { IUser, User } from "../models/User"
 import { Types } from "mongoose"
 
-
 // init router
 const apiRouter: Router = Router()
 
 
+
 // Create new article
-// req.body: {
-//     owner: id of owner user (string)
-//     parent: id of parent collection (string)
-//     color: string
-//     header: string
-//     content: string
-//     tags: string[]
-// }
-// req.headers: {
-//     auth: JWT
-// }
 apiRouter.post("/article/create", validateUser, async ( req: userRequest, res: Response) => {
     // Check validation errors. If errors, return 403
     const validationErrors: Result<ValidationError> = validationResult(req);
@@ -35,23 +24,25 @@ apiRouter.post("/article/create", validateUser, async ( req: userRequest, res: R
     try{
         // create new article
         const user: any = req.user
-        const newArticle: IArticle = await Article.create({
+        const article: IArticle = await Article.create({
             owner: user._id,
             parent: req.body.parent,
-            color: req.body.color,
+            id: new Types.ObjectId(),
             title: req.body.title,
             content: req.body.content,
-            tags: req.body.tags
+            color: req.body.color,
+            due: req.body.due,
+            editedAt: new Date(),
+            usedTime: req.body.usedTime,
+            comments: [],
         })
 
-        // insert new article into parent's articles
-        await Collection.updateOne(
-            {_id: newArticle.parent as unknown as Types.ObjectId}, 
-            {$addToSet: {articles: newArticle._id}})
+        // return constructed article
+        const newArticle: IArticle | null = await Article.findOne({_id: article._id})
 
         return void res.status(200).json(newArticle)
     } catch (error: any) {
-        console.error(`Error while creating article ${error}`)
+        console.error(`Error while creating article: ${error}`)
         return void res.status(500).json({message: "server error while creating article"})
     }
 })
@@ -70,8 +61,16 @@ apiRouter.post("/article/save", validateUser, async ( req: userRequest, res: Res
         await Article.updateOne({_id: req.body._id as Types.ObjectId}, {
             title: req.body.title,
             content: req.body.content,
+            color: req.body.color,
+            due: req.body.due,
+            editedAt: new Date(),
+            usedTime: req.body.usedTime,
+            comments: req.body.comments,
         })
-        return void res.status(200).json({message: "article saved"})
+
+        // return the updated article
+        const savedArticle = await Article.findOne({_id: req.body._id})
+        return void res.status(200).json(savedArticle)
 
     } catch (error: any) {
         console.error(error)
@@ -80,14 +79,37 @@ apiRouter.post("/article/save", validateUser, async ( req: userRequest, res: Res
 })
 
 
+// add comment to article
+apiRouter.post("/article/addComment", validateUser, async ( req: userRequest, res: Response ) => {
+    // Check validation errors. If errors, return 403
+    const validationErrors: Result<ValidationError> = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+        console.error(`ValidationErrors ${validationErrors}`)
+        return void res.status(403).json({message: `Bad request`})
+    }
+
+    try {
+        const newComment = {
+            id: new Types.ObjectId(),
+            content: req.body.comment,
+            createdAt: new Date(),
+        }
+
+        await Article.updateOne(
+            {_id: req.body.articleId},
+            {$addToSet: {comments: newComment}
+        })
+
+        return void res.status(200).json(newComment)
+
+    } catch (error: any) {
+        console.log(error)
+        return void res.json("Error while saving comment to article")
+    }
+})
+
+
 // Delete single article
-// req.body: {
-//     id: string
-// }
-// req.user: {
-//     id: string
-//     isAdmin: boolean
-// }
 apiRouter.delete("/article", validateUser, async (req: userRequest, res: Response) => {
     // Check validation errors. If errors, return 403
     const validationErrors: Result<ValidationError> = validationResult(req);
@@ -102,12 +124,6 @@ apiRouter.delete("/article", validateUser, async (req: userRequest, res: Respons
 
         // if article existis and user has authority to remove it, delete article
         if (existingArticle && ( user._id == existingArticle.owner || user.isAdmin)) {
-
-            // remove articleId from parent's articles
-            await Collection.updateOne(
-                { _id: existingArticle.parent },
-                { $pull: { articles: existingArticle._id } }
-            )
 
             // delete from articles
             await Article.deleteOne({_id: existingArticle._id})
@@ -139,7 +155,6 @@ apiRouter.post("/collection/create", validateUser, async ( req: userRequest, res
         const newCollection: ICollection = await Collection.create({
             owner: user._id,
             title: req.body.title,
-            articles: [],
         })
         return void res.status(200).json(newCollection)
 
@@ -173,7 +188,7 @@ apiRouter.post("/collection/edit", validateUser, async ( req: userRequest, res: 
 
     } catch (error: any) {
         console.log(error)
-        return void res.status(500).json({message: "Server error while editing article."})
+        return void res.status(500).json({message: "Server error while editing collection."})
     }
 })
 
@@ -203,10 +218,6 @@ apiRouter.delete("/collection", validateUser, async ( req: userRequest, res: Res
 })
 
 // get user's board
-// req.user: {
-//     id: string
-//     isAdmin: boolean
-// }
 apiRouter.get("/get/board", validateUser, async (req: userRequest, res: Response) =>{
     // get and construct user's board element (ICollection[])
     try {

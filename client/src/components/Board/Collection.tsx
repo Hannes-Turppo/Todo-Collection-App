@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { ICollection } from '../../interfaces/ICollection'
-import { Box, Grid2, IconButton, Paper, Typography } from '@mui/material'
+import { Box, Grid2, IconButton, Paper, Tooltip, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import Article from './Article';
@@ -29,7 +29,7 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
   const [placeholderContent, setNewContent] = React.useState<string>(() => {return ""})
   // const [] = React.useState<>()
 
-  // State for handling article creation
+  // State for handling article creation dialog
   const [openCArticle, setOpenCArticle] = React.useState<boolean>(() => {return false})
   
   // open creation window
@@ -43,7 +43,7 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
   }
   
   // Save new article
-  const createArticle = async (title: string, content: string) => {
+  const createArticle = async ( title: string, content: string, color: string, due: string, usedTime: string ) => {
 
     const res = await fetch("/api/article/create", {
       method: "post",
@@ -55,8 +55,9 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
         title: title,
         content: content,
         parent: collection._id,
-        color: "blue",
-        tags: [],
+        due: due,
+        color: color,
+        usedTime: usedTime,
       })
     })
     if (res.ok) {
@@ -142,7 +143,7 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
         <>
           {/* displayed when article is doubleclicked or can be opened trough menu */}
           <EditArticle mode="Create new" open={openCArticle} onClose={handleCloseCreate} saveArticle={createArticle} setTitle={setNewTitle} setContent={setNewContent}
-          article={{ _id: new Types.ObjectId, parent: collection._id, owner: new Types.ObjectId, title: "", content: "", color: "blue", tags: [], }}/>
+          article={{ _id: new Types.ObjectId, parent: collection._id, owner: new Types.ObjectId, title: "", content: "", color: "blue", due: "", editedAt: new Date(), usedTime: "", comments: [] }}/>
 
 
           {/* Edit collection dialog */}
@@ -186,15 +187,17 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
                 </Typography>
 
                 {/* component options */}
-                <IconButton
-                  onClick={openCollectionOptions}
-                  sx={{
-                    height: "100%",
-                    borderRadius:2
-                  }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
+                <Tooltip title="Options">
+                  <IconButton
+                    onClick={openCollectionOptions}
+                    sx={{
+                      height: "100%"
+                    }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Tooltip>
+
                 <Options open={openOptions} setOpen={setOpenOptions} mode='collection' anchorEl={anchorEl} openEdit={editCollection} deleteObject={deleteCollection}/>
               </Paper>
 
@@ -226,18 +229,20 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
               </Box>
 
               {/* Add article button */}
-              <IconButton
-                onClick={openCreateArticle}
-                sx={{
-                  width:"100%",
-                  borderRadius: 1,
-                  m:0,
-                  bgcolor: "inherit",
-                  border:1
-                }}
-                >
-                <AddIcon />
-              </IconButton>
+              <Tooltip title="Create article">
+                <IconButton
+                  onClick={openCreateArticle}
+                  sx={{
+                    width:"100%",
+                    borderRadius: 1,
+                    m:0,
+                    bgcolor: "inherit",
+                    border:1
+                  }}
+                  >
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
             </Paper>
           </Grid2>
         </>

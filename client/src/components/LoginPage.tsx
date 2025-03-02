@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Box, Button, FormControl, IconButton, InputAdornment, InputLabel, OutlinedInput, Paper, TextField, Typography } from '@mui/material'
+import { Box, Button, FormControl, IconButton, InputAdornment, InputLabel, OutlinedInput, Paper, TextField, Tooltip, Typography } from '@mui/material'
 import { Link, useNavigate } from 'react-router-dom'
 import SimpleDialog from './SimpleDialog'
 import { validateToken } from '../hooks/validateToken'
@@ -117,17 +117,19 @@ function LoginPage() {
                 sx={{ width: 1 }}
                 endAdornment={
                   <InputAdornment position="end">
-                    <IconButton
-                      aria-label={
-                        showPassword ? 'hide the password' : 'display the password'
-                      }
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      onMouseUp={handleMouseUpPassword}
-                      edge="end"
-                      >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
+                    <Tooltip title="Show password">
+                      <IconButton
+                        aria-label={
+                          showPassword ? 'hide the password' : 'display the password'
+                        }
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        onMouseUp={handleMouseUpPassword}
+                        edge="end"
+                        >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </Tooltip>
                   </InputAdornment>
                 }
               />

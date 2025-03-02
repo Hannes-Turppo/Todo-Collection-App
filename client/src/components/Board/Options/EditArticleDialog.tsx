@@ -1,6 +1,6 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { IArticle } from '../../../interfaces/IArticle'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface dialogProps {
   mode: string
@@ -9,19 +9,29 @@ interface dialogProps {
   onClose: () => void
   setTitle: (title: string) => void
   setContent: (title: string) => void
-  saveArticle: (title: string, content: string) => void
+  saveArticle: (title: string, content: string, color: string, due: string, usedTime: string ) => void
 }
 
 function EditArticle({ mode, article, open, onClose, saveArticle, setTitle, setContent }: dialogProps) {
-  const [loading, setLoading] = React.useState<boolean>(true)
-  const [localTitle, setLocalTitle] = React.useState<string>(() => {return ""})
-  const [localContent, setLocalContent] = React.useState<string>(() => {return ""})
-  // const [] = React.useState<>()
+  const [loading, setLoading] = useState<boolean>(true)
+  const [localTitle, setLocalTitle] = useState<string>(() => {return article.title})
+  const [localContent, setLocalContent] = useState<string>(() => {return article.content})
+  const [localColor, setLocalColor] = useState<string>(() => {return article.color})
+  const [localDue, setLocalDue] = useState<string>(() => {return article.due})
+  const [localUsedTime, setLocalUsedTime] = useState<string>(() => {return article.usedTime})
 
   const handleSave = () => {
     setTitle(localTitle)
     setContent(localContent)
-    saveArticle(localTitle, localContent)
+    saveArticle(localTitle, localContent, localColor, localDue, localUsedTime )
+
+    // reset fields after saving
+    setLocalTitle("")
+    setLocalContent("")
+    setLocalColor("")
+    setLocalDue("")
+    setLocalUsedTime("")
+
     onClose()
   }
 
@@ -57,19 +67,28 @@ function EditArticle({ mode, article, open, onClose, saveArticle, setTitle, setC
           >
             <TextField
               multiline={true}
-              id="titleField"
               label="Title"
               value={localTitle}
               onChange={(e) => {setLocalTitle(e.target.value)}}
               sx={{ mt: 1 }}
             />
-
             <TextField
               multiline={true}
-              id="contentField"
               label="Content"
               value={localContent}
               onChange={(e) => {setLocalContent(e.target.value)}}
+            />
+            <TextField
+              label="Used time"
+              value={localUsedTime}
+              onChange={(e) => {setLocalUsedTime(e.target.value)}}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Due"
+              value={localDue}
+              onChange={(e) => {setLocalDue(e.target.value)}}
+              sx={{ mt: 1 }}
             />
 
           </DialogContent>
