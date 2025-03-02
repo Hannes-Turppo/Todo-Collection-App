@@ -207,6 +207,7 @@ apiRouter.delete("/collection", validateUser, async ( req: userRequest, res: Res
         const collection: ICollection | null = await Collection.findOne({_id: req.body._id})
         if (collection && ( user._id == collection.owner || user.isAdmin)) {
             await Collection.deleteOne({_id: collection._id})
+            await Article.deleteMany({parent: collection._id})
             return void res.status(200).json({message: `Collection '${collection.title}' deleted.`})
         }
         return void res.status(404).json({message: "Collection not found"})

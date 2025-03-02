@@ -6,8 +6,8 @@ interface ICollection extends Document {
 }
 
 const Boardchema = new Schema({
-    owner: {type: Schema.Types.ObjectId, ref: "User", required: true, unique: false},
-    title: { type: String, required: true, unique: false },
+    owner: {type: Schema.Types.ObjectId, ref: "User", require: true, unique: false},
+    title: { type: String, require: true, unique: false },
 })
 
 const Collection: mongoose.Model<ICollection> = mongoose.model<ICollection>("Collection", Boardchema)

@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ICollection } from '../../interfaces/ICollection';
 import { IUser } from '../../interfaces/IUser';
 import EditCollection from './Options/EditCollectionDialog';
-import { Types } from 'mongoose';
+import { set, Types } from 'mongoose';
 import { IBoard } from '../../interfaces/IBoard';
 import { IArticle } from '../../interfaces/IArticle';
 
@@ -39,7 +39,6 @@ function Board({ validToken, user, board }: collectionProps) {
   }
 
   const saveNewCollection = async (title: string) => {
-    console.log(title)
     const res = await fetch("/api/collection/create", {
       method: "post",
       headers: {
@@ -52,6 +51,7 @@ function Board({ validToken, user, board }: collectionProps) {
     })
     if (res.ok) {
       const data = await res.json()
+      console.log(data)
       setCollections([...collections, data])
     }
   }
@@ -77,11 +77,52 @@ function Board({ validToken, user, board }: collectionProps) {
   // search field functionality
   const [searchValue, setSearchValue] = useState<string>(() => {return ""})
   const [filteredArticles, setFilteredArticles] = useState<IArticle[]>(() => {return articles})
+  const [filteredCollections, setFilteredCollections] = useState<ICollection[]>(() => {return collections})
 
+
+  // filter articles based on searchfield value
   useEffect (() => {
     console.log(searchValue)
-    setFilteredArticles(articles.filter((article) => (article.title.includes(searchValue))))
-  }, [searchValue])
+    console.log(filteredArticles)
+    
+    if (searchValue === "") {      
+      // handle empty search
+      setFilteredArticles(articles)
+    } else {
+      const filtered = articles.filter(
+        (article) => (
+          article.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+          article.content.toLowerCase().includes(searchValue.toLocaleLowerCase())
+        )
+      )
+      setFilteredArticles(filtered)
+    }
+  }, [articles, collections, searchValue])
+  
+  
+  useEffect (() => {
+    if (searchValue === "") {
+      setFilteredCollections(collections)
+    } else {
+
+      // get all unique article parent IDs
+      const uniqueParents = [...new Set(filteredArticles.map(article => article.parent))];
+      
+      // filter collections based on unique parents
+      const matchingCollections = collections.filter((collection) => (
+        uniqueParents.includes(collection._id)
+      ))
+      
+      matchingCollections.map((collection) => (
+        collection.articles = filteredArticles.filter((article) => (
+          article.parent === collection._id
+        ))
+      ))
+      setFilteredCollections(matchingCollections)
+      
+      console.log(filteredCollections)
+    }
+  }, [filteredArticles, collections])
 
 
   // component
@@ -100,6 +141,7 @@ function Board({ validToken, user, board }: collectionProps) {
               _id: new Types.ObjectId,
               owner: new Types.ObjectId,
               title: "",
+              articles: [],
             }} />
 
 
@@ -149,6 +191,7 @@ function Board({ validToken, user, board }: collectionProps) {
 
                   {/* Searchfield for filtering articles */}
                   <TextField 
+                    label="Search"
                     value={searchValue}
                     onChange={(e) => {setSearchValue(e.target.value)}}
                     sx={{
@@ -174,12 +217,13 @@ function Board({ validToken, user, board }: collectionProps) {
                 {/* MUI Grid v2 to work as base for displaying Board */}
                 <Box>
                   <Grid2 
+                    id="collectionContainer"
                     container
                     spacing={1}
                     sx={{ borderRadius:1, p:1, pt:2, pr:2, mt:-1, width: 1, bgcolor:"whitesmoke", minHeight: 300 }}
                   >
                     {
-                      collections.map((collection) => (
+                      filteredCollections.map((collection) => (
                         <Collection key={collection._id.toString()} collection={collection} articleList={filteredArticles.filter((article) => (article.parent == collection._id))} deleteFromBoard={deleteCollection}/>
                       ))
                     }
