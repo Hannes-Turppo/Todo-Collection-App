@@ -70,3 +70,5 @@ Point suggestions:
 - articles have estimated time: 1p
 - user can mark spent time: 1p
 - total: 47p
+
+Total used time: 84h 45min
