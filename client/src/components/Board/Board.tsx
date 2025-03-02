@@ -112,13 +112,18 @@ function Board({ validToken, user, board }: collectionProps) {
       const matchingCollections = collections.filter((collection) => (
         uniqueParents.includes(collection._id)
       ))
-      
-      matchingCollections.map((collection) => (
-        collection.articles = filteredArticles.filter((article) => (
-          article.parent === collection._id
-        ))
-      ))
-      setFilteredCollections(matchingCollections)
+
+      const updatedCollectios = matchingCollections.map((collection) => {
+
+        return {
+          ...collection,
+          articles: filteredArticles.filter((article) => (
+            article.parent === collection._id
+          ))
+        }
+      })
+
+      setFilteredCollections(updatedCollectios)
       
       console.log(filteredCollections)
     }
@@ -141,6 +146,7 @@ function Board({ validToken, user, board }: collectionProps) {
               _id: new Types.ObjectId,
               owner: new Types.ObjectId,
               title: "",
+              color: "whitesmoke",
               articles: [],
             }} />
 

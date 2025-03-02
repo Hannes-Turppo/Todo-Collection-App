@@ -11,7 +11,6 @@ import { Types } from "mongoose"
 const apiRouter: Router = Router()
 
 
-
 // Create new article
 apiRouter.post("/article/create", validateUser, async ( req: userRequest, res: Response) => {
     // Check validation errors. If errors, return 403
@@ -92,6 +91,7 @@ apiRouter.post("/article/addComment", validateUser, async ( req: userRequest, re
         const newComment = {
             id: new Types.ObjectId(),
             content: req.body.comment,
+            color: req.body.color,
             createdAt: new Date(),
         }
 
@@ -155,6 +155,7 @@ apiRouter.post("/collection/create", validateUser, async ( req: userRequest, res
         const newCollection: ICollection = await Collection.create({
             owner: user._id,
             title: req.body.title,
+            color: req.body.color
         })
         return void res.status(200).json(newCollection)
 
@@ -181,7 +182,7 @@ apiRouter.post("/collection/edit", validateUser, async ( req: userRequest, res: 
 
             await Collection.updateOne(
                 {_id: req.body._id},
-                {$set: {title: req.body.title}}
+                {$set: {title: req.body.title, color: req.body.color}}
             )
             return void res.status(200).json({message: `Title '${req.body.title}' set`})
         }

@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Menu, MenuItem, TextField } from '@mui/material'
 import { IArticle } from '../../../interfaces/IArticle'
 import React, { useEffect, useState } from 'react'
 
@@ -12,6 +12,13 @@ interface dialogProps {
   saveArticle: (title: string, content: string, color: string, due: string, usedTime: string ) => void
 }
 
+const colorOptions = [
+  {hex: "whiteSmoke", name: "white"},
+  {hex: "#518ded", name: "Blue"},
+  {hex: "#ff5454", name: "Red"},
+  {hex: "#9fd17d", name: "green"},
+]
+
 function EditArticle({ mode, article, open, onClose, saveArticle, setTitle, setContent }: dialogProps) {
   const [loading, setLoading] = useState<boolean>(true)
   const [localTitle, setLocalTitle] = useState<string>(() => {return article.title})
@@ -19,18 +26,11 @@ function EditArticle({ mode, article, open, onClose, saveArticle, setTitle, setC
   const [localColor, setLocalColor] = useState<string>(() => {return article.color})
   const [localDue, setLocalDue] = useState<string>(() => {return article.due})
   const [localUsedTime, setLocalUsedTime] = useState<string>(() => {return article.usedTime})
-
+  
   const handleSave = () => {
     setTitle(localTitle)
     setContent(localContent)
     saveArticle(localTitle, localContent, localColor, localDue, localUsedTime )
-
-    // reset fields after saving
-    setLocalTitle("")
-    setLocalContent("")
-    setLocalColor("")
-    setLocalDue("")
-    setLocalUsedTime("")
 
     onClose()
   }
@@ -44,6 +44,15 @@ function EditArticle({ mode, article, open, onClose, saveArticle, setTitle, setC
     setLocalContent(article.content)
     setLoading(false)
   }, [article])
+
+  
+  // handle color menu
+  const [openColors, setOpenColors] = useState<boolean>(false)
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(() => {return null})
+  const handleCloseColors = () => {
+    setOpenColors(false)
+  }
+
 
   return (
     <>
@@ -91,7 +100,31 @@ function EditArticle({ mode, article, open, onClose, saveArticle, setTitle, setC
               sx={{ mt: 1 }}
             />
 
+            <Button 
+                onClick={(e: React.MouseEvent<HTMLElement>) => {
+                  setAnchorEl(e.currentTarget)
+                  setOpenColors(true)
+                }}
+                sx ={{bgcolor: localColor}}
+              >
+              Color</Button>
+            <Menu 
+              open={openColors}
+              onClose={handleCloseColors}
+              anchorEl={anchorEl}
+              sx={{zIndex: 2100}}
+            >
+              {colorOptions.map((option) => (
+                <MenuItem key={option.name}
+                onClick={() => {setLocalColor(option.hex), setOpenColors(false)}}
+                sx={{bgcolor: option.hex}}
+                >
+                  {option.name}</MenuItem>
+              ))}
+            </Menu>
+
           </DialogContent>
+
           <DialogActions>
             <Button variant='contained' onClick={handleSave}>Save</Button>
             <Button variant='outlined' onClick={handleClose}>Close</Button>

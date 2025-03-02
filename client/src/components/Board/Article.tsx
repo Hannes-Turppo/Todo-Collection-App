@@ -11,7 +11,6 @@ import ArticleComment from './ArticleComment';
 import EditComment from './Options/EditCommentDialog';
 import { IComment } from '../../interfaces/IComment';
 import { ObjectId } from 'mongoose';
-import { Direction } from '@dnd-kit/core/dist/types';
 
 interface articleProps {
   article: IArticle
@@ -32,6 +31,8 @@ function Article({article, deleteFromCollection}: articleProps) {
   const [comments, setCommments] = useState<IComment[]>(() => {return article.comments})
   // const [] = React.useState<>()
 
+
+  // functionality for opening options and editing article
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
     setOpenOptions(true)
@@ -68,6 +69,7 @@ function Article({article, deleteFromCollection}: articleProps) {
       console.log(`Saving article failed: ${data.message}`)
       return
     }
+    setColor(color)
     setUsedTime(usedTime)
     setDue(due)
     setEditedAt(new Date())
@@ -81,12 +83,11 @@ function Article({article, deleteFromCollection}: articleProps) {
 
   // creacing comment for article
   const [creatingComment, setCreatingComment] = useState<boolean>(() => {return false})
-
   const openCreateComment = () => {
     setCreatingComment(true)
   }
 
-  const handleCreateComment = async (comment: string) => {
+  const handleCreateComment = async (comment: string, color: string) => {
     const res = await fetch("/api/article/addComment", {
       method: "post",
       headers: {
@@ -95,7 +96,8 @@ function Article({article, deleteFromCollection}: articleProps) {
       },
       body: JSON.stringify({
         articleId: article._id,
-        comment: comment
+        comment: comment,
+        color: color,
       })
     })
     if (res.ok) {
@@ -149,7 +151,7 @@ function Article({article, deleteFromCollection}: articleProps) {
             <EditArticle mode="Edit" open={editingArticle} onClose={handleCloseEdit} article={article} saveArticle={handleSaveArticle} setTitle={setTitle} setContent={setContent}/>
 
             {/* displayed when user adds a new comment to article */}
-            <EditComment comment='' open={creatingComment} setOpen={setCreatingComment} saveComment={handleCreateComment}/>
+            <EditComment open={creatingComment} setOpen={setCreatingComment} saveComment={handleCreateComment}/>
 
             <Paper
               onDoubleClick={handleOpenEdit}
@@ -159,13 +161,16 @@ function Article({article, deleteFromCollection}: articleProps) {
                 minHeight: 150,
               }}
               >
+                
+              
+              {/* Article header */}
               <Paper sx={{
                 display:"flex",
                 justifyContent:"space-between",
                 alignItems:"center",
                 elevation: 20,
+                bgcolor: color
               }}>
-                {/* Article header */}
                 <Typography sx={{ml:1}}>{title}</Typography>
 
                 <Tooltip title="Options">

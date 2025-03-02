@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ICollection } from '../../interfaces/ICollection'
 import { Box, Grid2, IconButton, Paper, Tooltip, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -21,6 +21,7 @@ interface collectionProps {
 function collection ({collection, articleList, deleteFromBoard}: collectionProps) {
   const [loading, setLoading] = React.useState<boolean>(true)
   const [title, setTitle] = React.useState<string>(() => {return collection.title})
+  const [color, setColor] = useState<string>(() => {return collection.color})
   const [articles, setArticles] = React.useState<IArticle[]>(() => {return articleList})
 
   
@@ -106,7 +107,7 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
     setOpenEdit(true)
   }
 
-  const saveCollection = async (title: string) => {
+  const saveCollection = async (title: string, color: string) => {
     const res = await fetch("api/collection/edit", {
       method: "post",
       headers: {
@@ -115,11 +116,13 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
       },
       body: JSON.stringify({
         _id: collection._id,
-        title: title
+        title: title,
+        color: color
       })
     })
     if (res.ok) {
       setTitle(title)
+      setColor(color)
     }
   }
 
@@ -143,7 +146,7 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
         <>
           {/* displayed when article is doubleclicked or can be opened trough menu */}
           <EditArticle mode="Create new" open={openCArticle} onClose={handleCloseCreate} saveArticle={createArticle} setTitle={setNewTitle} setContent={setNewContent}
-          article={{ _id: new Types.ObjectId, parent: collection._id, owner: new Types.ObjectId, title: "", content: "", color: "blue", due: "", editedAt: new Date(), usedTime: "", comments: [] }}/>
+          article={{ _id: new Types.ObjectId, parent: collection._id, owner: new Types.ObjectId, title: "", content: "", color: "whiteSmoke", due: "", editedAt: new Date(), usedTime: "", comments: [] }}/>
 
 
           {/* Edit collection dialog */}
@@ -173,7 +176,7 @@ function collection ({collection, articleList, deleteFromBoard}: collectionProps
                   flexDirection: "row",
                   justifyContent: "space-between",
                   elevation: 20,
-                  bgcolor: "inherit",
+                  bgcolor: color || "whitesmoke",
                 }}
                 >
                 <Typography 

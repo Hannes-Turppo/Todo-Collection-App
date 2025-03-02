@@ -27,6 +27,7 @@ function ArticleComment({comment, deleteComment}: commentProps) {
         justifyContent: "space-between",
         alignItems: "center",
         m:1,
+        bgcolor: comment.color,
       }}
       >
         {/* display comment and time it was created: */}

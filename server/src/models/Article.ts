@@ -5,29 +5,31 @@ import { ObjectId } from "mongoose";
 
 // Define the interface for comments
 interface IComment {
-  id: ObjectId;
-  content: string;
-  createdAt: Date;
+  id: ObjectId
+  content: string
+  color: string
+  createdAt: Date
 }
 
 // Define the interface for articles
 interface IArticle extends Document {
-    id: string;
-    parent: Types.ObjectId;
-    owner: Types.ObjectId;
-    title: string;
-    content: string;
-    color: string;
-    due: string;
-    editedAt: Date;
-    usedTime: string;
-    comments: IComment[];
+    id: string
+    parent: Types.ObjectId
+    owner: Types.ObjectId
+    title: string
+    content: string
+    color: string
+    due: string
+    editedAt: Date
+    usedTime: string
+    comments: IComment[]
 }
 
 // Define the comment schema 
 const commentSchema = new Schema({
     id: { type: Schema.Types.ObjectId, default: () => new Types.ObjectId() },
     content: { type: String, require: true },
+    color: { type: String, require: true, default: "whiteSmoke"},
     createdAt: { type: Date, require: true },
 });
 
