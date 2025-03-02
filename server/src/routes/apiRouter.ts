@@ -3,8 +3,6 @@ import { Result, ValidationError, validationResult } from "express-validator"
 import { Collection, ICollection } from "../models/Collection"
 import { Article, IArticle } from "../models/Article"
 import { userRequest, validateUser } from "../middleware/validateToken"
-import { articleValidators, collectionValidators } from "../validators/apiValidators"
-import { IUser, User } from "../models/User"
 import { Types } from "mongoose"
 
 // init router

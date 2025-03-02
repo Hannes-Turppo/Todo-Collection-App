@@ -11,10 +11,10 @@ const registerValidators = () => {
         body("password")
             .escape()
             .isLength({min: 8}).withMessage(passwordMessage)
-            // .matches(/[A-Z]/).withMessage(passwordMessage)
-            // .matches(/[a-z]/).withMessage(passwordMessage)
-            // .matches(/[0-9]/).withMessage(passwordMessage)
-            // .matches(/[#!&?]/).withMessage(passwordMessage),
+            .matches(/[A-Z]/).withMessage(passwordMessage)
+            .matches(/[a-z]/).withMessage(passwordMessage)
+            .matches(/[0-9]/).withMessage(passwordMessage)
+            .matches(/[#!&?]/).withMessage(passwordMessage),
     ]
 };
 

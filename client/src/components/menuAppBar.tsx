@@ -53,12 +53,15 @@ export default function menuAppBar() {
                   <Link to="/">
                     <Typography sx={{color:"secondary.main"}}>Board</Typography>
                   </Link>
-                  <Link to="/settings">
+
+                  {/* not implemented */}
+                  {/* <Link to="/settings">
                     <Typography sx={{color:"secondary.main"}}>Settings</Typography>
                   </Link>
                   <Link to="/user/profile">
                     <Typography sx={{color:"secondary.main"}}>My account</Typography>
-                  </Link>
+                  </Link> */}
+
                   <Button onClick={handleLogout}>
                     <Typography sx={{color:"secondary.main"}}>Logout</Typography>
                   </Button>

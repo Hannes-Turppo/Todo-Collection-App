@@ -75,7 +75,6 @@ function RegisterPage() {
         justifyContent: "center",
         alignItems: "top-center",
         alignSelf: "center",
-        border: 1,
         width: "100vw",
         height: "100vh",
         mx: "auto",
@@ -87,7 +86,6 @@ function RegisterPage() {
           elevation: 15,
           width: {md: 810, xs: "90vw"},
           height: 550,
-          borderColor: "secondary.main",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -176,7 +174,7 @@ function RegisterPage() {
             <Typography sx={{ mx: "auto" }}>
               Already have an account?
             </Typography>
-            <Link to="/login" sx={{mx: "auto"}}>
+            <Link to="/login" >
               <Button variant='outlined'>
                 <Typography>
                   Login
