@@ -1,5 +1,5 @@
 Install:
-"npm run install"
+"npm install"
 
 run server:
 "npm run dev:server"
